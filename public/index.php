@@ -23,12 +23,20 @@ try {
     // Novas estatísticas adicionadas
     $total_noticias = $db->query("SELECT count(*) FROM noticias")->fetchColumn();
     $total_galeria  = $db->query("SELECT count(*) FROM galeria")->fetchColumn();
+    
+    // Estatísticas de Cursos (com tratamento de erro caso a tabela não exista)
+    try {
+        $total_cursos = $db->query("SELECT count(*) FROM cursos")->fetchColumn();
+    } catch (Exception $e) {
+        $total_cursos = 0;
+    }
 } catch (Exception $e) {
     $total_projetos = $total_projetos ?? 0;
     $total_usuarios = $total_usuarios ?? 0;
     $total_slides   = $total_slides ?? 0;
     $total_noticias = $total_noticias ?? 0;
     $total_galeria  = $total_galeria ?? 0;
+    $total_cursos   = 0;
 }
 ?>
 <!DOCTYPE html>
@@ -157,6 +165,24 @@ try {
                             <?php else: ?>
                                 <a href="perfil.php" class="small text-decoration-none text-dark fw-bold">Meu Perfil <i class="bi bi-arrow-right"></i></a>
                             <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card: Cursos e Palestras -->
+                <div class="col-md-4 mb-4">
+                    <div class="card stat-card shadow-sm h-100" style="border-left: 5px solid #198754 !important;">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="icon-box me-3" style="background-color: rgba(25, 135, 84, 0.1);">
+                                <i class="bi bi-mortarboard-fill h3 mb-0" style="color: #198754;"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1 small fw-bold text-uppercase">Cursos e Palestras</h6>
+                                <h2 class="mb-0 fw-bold"><?= $total_cursos ?></h2>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pb-3">
+                            <a href="lista_cursos.php" class="small text-decoration-none fw-bold" style="color: #198754;">Gerenciar <i class="bi bi-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>

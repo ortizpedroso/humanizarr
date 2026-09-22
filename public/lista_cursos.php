@@ -198,6 +198,11 @@ unset($_SESSION['msg_curso'], $_SESSION['tipo_msg_curso']);
                                         </span>
                                     </td>
                                     <td class="text-end">
+                                        <a href="editar_curso.php?id=<?= $curso_item['id'] ?>" 
+                                           class="btn btn-sm btn-outline-primary btn-action" 
+                                           title="Editar Curso">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
                                         <a href="toggle_status.php?id=<?= $curso_item['id'] ?>" 
                                            class="btn btn-sm btn-outline-<?= $curso_item['status'] == 'Aberto' ? 'warning' : 'success' ?> btn-action" 
                                            title="<?= $curso_item['status'] == 'Aberto' ? 'Pausar' : 'Ativar' ?>">
