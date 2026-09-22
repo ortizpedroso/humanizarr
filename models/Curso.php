@@ -59,7 +59,8 @@ class Curso {
                       data_evento = :data_evento, 
                       horario_inicio = :horario_inicio, 
                       vagas_limite = :vagas_limite, 
-                      status = :status";
+                      status = :status,
+                      emitir_certificado = :emitir_certificado";
         
         if (isset($dados['banner_imagem']) && !empty($dados['banner_imagem'])) {
             $query .= ", banner_imagem = :banner_imagem";
@@ -93,6 +94,9 @@ class Curso {
         $stmt->bindParam(":vagas_limite", $dados['vagas_limite']);
         $stmt->bindParam(":status", $dados['status']);
         
+        $emitir = isset($dados['emitir_certificado']) ? 1 : 0;
+        $stmt->bindParam(":emitir_certificado", $emitir);
+        
         if (isset($dados['banner_imagem']) && !empty($dados['banner_imagem'])) {
             $stmt->bindParam(":banner_imagem", $dados['banner_imagem']);
         }
@@ -100,9 +104,6 @@ class Curso {
             $stmt->bindParam(":certificado_arquivo", $dados['certificado_arquivo']);
         }
         
-        $emitir = isset($dados['emitir_certificado']) ? 1 : 0;
-        $stmt->bindParam(":emitir_certificado", $emitir);
-
         return $stmt->execute();
     }
 
