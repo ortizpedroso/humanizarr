@@ -1,0 +1,37 @@
+# robots.txt - Instituto Humaniza RR
+# Permite indexação de todo o site
+
+User-agent: *
+Allow: /
+Allow: /index.php
+Allow: /sobre.php
+Allow: /projetos.php
+Allow: /noticias.php
+Allow: /galeria_completa.php
+Allow: /contato.php
+Allow: /doe-aqui.php
+Allow: /pagina.php
+
+# Bloquear área administrativa
+Disallow: /public/
+Disallow: /config/
+Disallow: /models/
+Disallow: /PHPMailer/
+Disallow: /*.php$
+Allow: /public/index.php
+
+# Sitemap
+Sitemap: https://humanizarr.org/sitemap.xml
+
+# Crawlers específicos
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2

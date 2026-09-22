@@ -1,0 +1,23 @@
+# Redirecionamento HTTPS forçado
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Proteção contra clickjacking
+Header always set X-Frame-Options "SAMEORIGIN"
+
+# Proteção XSS
+Header always set X-XSS-Protection "1; mode=block"
+
+# Prevenir MIME sniffing
+Header always set X-Content-Type-Options "nosniff"
+
+# Referrer Policy
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Cache de segurança para páginas sensíveis
+<FilesMatch "\.(php)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+</FilesMatch>

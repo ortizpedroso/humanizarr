@@ -23,13 +23,58 @@ $favicon_url = !empty($conf_site['favicon']) ? $prefixo . $conf_site['favicon'] 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instituto Humaniza RR</title>
+    <title>Instituto Humaniza RR - Transformando Vidas em Roraima</title>
+    <meta name="description" content="Instituto Humaniza RR - Promovendo saúde, educação e assistência social em Roraima. Conheça nossos projetos e faça parte dessa transformação.">
+    <meta name="keywords" content="instituto social roraima, projetos sociais boa vista, voluntariado rr, doações roraima, assistência social, educação, saúde comunitária">
+    <meta name="author" content="Instituto Humaniza RR">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://humanizarr.org<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://humanizarr.org/">
+    <meta property="og:title" content="Instituto Humaniza RR - Transformando Vidas">
+    <meta property="og:description" content="Promovendo saúde, educação e assistência social em Roraima. Faça parte dessa transformação!">
+    <meta property="og:image" content="<?= $logo_url ?: 'https://humanizarr.org/public/uploads/logo.png' ?>">
+    <meta property="og:locale" content="pt_BR">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Instituto Humaniza RR">
+    <meta name="twitter:description" content="Transformando realidades através de projetos sociais em Roraima.">
+    
     <?php if($favicon_url): ?><link rel="icon" type="image/x-icon" href="<?= $favicon_url ?>"><?php endif; ?>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Schema.org - Dados Estruturados para ONG -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NGO",
+      "name": "Instituto Humaniza RR",
+      "url": "https://humanizarr.org",
+      "logo": "<?= $logo_url ?: 'https://humanizarr.org/public/uploads/logo.png' ?>",
+      "sameAs": [
+        "https://instagram.com/humanizarr",
+        "https://facebook.com/humanizarr"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Boa Vista",
+        "addressRegion": "RR",
+        "addressCountry": "BR"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "<?= htmlspecialchars($redes['whatsapp'] ?? '') ?>",
+        "contactType": "customer service"
+      }
+    }
+    </script>
     
     <style>
         :root { --h-red: #E30613; --h-dark: #2D2D2D; --h-white: #FFFFFF; }

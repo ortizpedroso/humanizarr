@@ -1,0 +1,8 @@
+# Bloquear listagem de diretórios
+Options -Indexes
+
+# Proteger arquivos sensíveis
+<FilesMatch "\.(env|log|sql|bak)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
