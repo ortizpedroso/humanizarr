@@ -66,6 +66,12 @@ $nivel_acesso = $_SESSION['usuario_nivel'] ?? 'editor';
                 </a>
             </li>
 
+            <li class="nav-item mb-1">
+                <a class="nav-link <?= (strpos($pagina_atual, 'curso') !== false || strpos($pagina_atual, 'inscricao') !== false) ? 'active' : '' ?>" href="lista_cursos.php">
+                    <i class="bi bi-mortarboard me-2"></i> Cursos e Palestras
+                </a>
+            </li>
+
             <hr class="my-3" style="border-color: rgba(255,255,255,0.1);">
 
             <li class="nav-item mb-1">
