@@ -7,11 +7,12 @@
  *
  * Fluxo oficial:
  * 1. O participante chega pelo card do evento (vitrine cursos.php) ou acessa
- *    direto com ?id=CURSO. Digita o CPF.
+ *    direto com ?id=CURSO. Digita o E-MAIL usado na inscrição
+ *    (este projeto não coleta CPF — a pesquisa é por e-mail).
  * 2. Se a inscrição existir, estiver confirmada e o evento já tiver
- *    encerrado, o sistema pede a CONFIRMAÇÃO DO E-MAIL cadastrado.
+ *    encerrado, o sistema exibe os dados e libera a geração.
  * 3. Ao clicar em "Confirmar e gerar", o PDF é enviado para o e-mail
- *    confirmado (agradecimento + anexo) e liberado para impressão/download.
+ *    cadastrado (agradecimento + anexo) e liberado para impressão/download.
  *
  * Também suporta:
  *  - Link direto por inscrição:  certificado.php?inscricao=ID
@@ -34,7 +35,7 @@ $certificado = new CertificadoService($db);
 $erro  = '';
 $aviso = '';
 $id_curso   = isset($_GET['id']) ? (int)$_GET['id'] : (int)($_POST['id'] ?? 0);
-$cpf_query  = trim($_POST['cpf'] ?? '');
+$email_query = trim($_POST['email'] ?? $_GET['email'] ?? '');
 $etapa = 'buscar'; // buscar -> confirmar_email -> emitido
 
 // -------------------------------------------------------------------
@@ -78,23 +79,25 @@ if ((isset($_GET['download']) || isset($_GET['imprimir'])) && !empty($_GET['insc
 }
 
 // -------------------------------------------------------------------
-// ETAPA A: BUSCA POR CPF (em um curso específico ou em todos)
+// ETAPA A: BUSCA POR E-MAIL (em um curso específico ou em todos)
+// OBS: este projeto não coleta CPF; a pesquisa oficial é por e-mail.
 // -------------------------------------------------------------------
-if (!$inscricao && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['buscar_cpf'])) {
-    $cpf_digitado = preg_replace('/\D/', '', $_POST['cpf'] ?? '');
+if (!$inscricao && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['buscar_email'])) {
+    $email_digitado = strtolower(trim($_POST['email'] ?? ''));
 
-    if (strlen($cpf_digitado) !== 11) {
-        $erro = 'Digite um CPF válido (11 dígitos).';
+    if (!filter_var($email_digitado, FILTER_VALIDATE_EMAIL)) {
+        $erro = 'Digite um e-mail válido.';
     } else {
-        $filtros = ['cpf' => $cpf_digitado];
+        $filtros = ['email' => $email_digitado];
         if ($id_curso > 0) {
             $filtros['id_curso'] = $id_curso;
         }
         $resultado = $certificado->buscarInscricao($filtros);
 
         if (!$resultado) {
-            $erro = 'Nenhuma inscrição encontrada para este CPF'
-                  . ($id_curso > 0 ? ' neste evento.' : ' em nossos eventos.');
+            $erro = 'Nenhuma inscrição encontrada para este e-mail'
+                  . ($id_curso > 0 ? ' neste evento.' : ' em nossos eventos.')
+                  . ' Verifique se foi exatamente este e-mail que você usou na inscrição.';
         } else {
             $motivo = $certificado->motivoBloqueio($resultado);
             if ($motivo !== null) {
@@ -105,7 +108,7 @@ if (!$inscricao && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['busca
             }
         }
     }
-    $cpf_query = $_POST['cpf'] ?? '';
+    $email_query = $_POST['email'] ?? '';
 }
 
 // -------------------------------------------------------------------
@@ -228,20 +231,20 @@ $data_evento_fmt = $inscricao ? $certificado->formatarDataEvento($inscricao) : '
                 <h4 class="fw-bold text-success mb-3"><i class="bi bi-person-check me-2"></i>Inscrição localizada!</h4>
                 <table class="table table-borderless mb-3">
                     <tr><th style="width:160px;">Participante</th><td><?= htmlspecialchars($inscricao['nome']) ?></td></tr>
-                    <tr><th>CPF</th><td><?= htmlspecialchars($inscricao['cpf'] ?: '-') ?></td></tr>
+                    <tr><th>E-mail</th><td><?= htmlspecialchars($inscricao['email']) ?></td></tr>
                     <tr><th>Evento</th><td><?= htmlspecialchars($inscricao['curso_nome']) ?></td></tr>
                     <tr><th>Data</th><td><?= htmlspecialchars($data_evento_fmt) ?></td></tr>
                     <tr><th>Carga horária</th><td><?= htmlspecialchars($inscricao['duracao']) ?></td></tr>
                     <tr><th>Status</th><td><span class="badge bg-success"><?= htmlspecialchars($inscricao['status_inscricao']) ?></span></td></tr>
                 </table>
                 <hr>
-                <h5 class="fw-bold mb-2"><i class="bi bi-envelope-at me-2"></i>Confirme seu e-mail</h5>
-                <p class="text-muted">Para liberar a geração, confirme o e-mail utilizado na inscrição. Enviaremos o certificado em anexo para ele.</p>
+                <h5 class="fw-bold mb-2"><i class="bi bi-envelope-at me-2"></i>Confirme seu e-mail para receber o certificado</h5>
+                <p class="text-muted">Digite novamente o e-mail da inscrição (<strong><?= htmlspecialchars(\CertificadoService::mascararEmail($inscricao['email'])) ?></strong>) para liberar a geração. Enviaremos o certificado em anexo para ele.</p>
                 <form method="POST" action="certificado.php<?= $id_curso ? '?id=' . $id_curso : '' ?>">
-                    <input type="hidden" name="cpf" value="<?= htmlspecialchars($cpf_query) ?>">
+                    <input type="hidden" name="email" value="<?= htmlspecialchars($inscricao['email']) ?>">
                     <div class="mb-3">
                         <input type="email" name="email_confirmado" id="email_confirmado" class="form-control form-control-lg"
-                               placeholder="confirme-seu@email.com" required autofocus>
+                               placeholder="confirme-seu@email.com" required autofocus autocomplete="off">
                     </div>
                     <button type="submit" name="confirmar_email" value="1" class="btn btn-humaniza w-100 py-2 btn-lg">
                         <i class="bi bi-file-earmark-arrow-right me-2"></i>Confirmar e gerar meu certificado
@@ -250,11 +253,11 @@ $data_evento_fmt = $inscricao ? $certificado->formatarDataEvento($inscricao) : '
             </div>
 
         <?php else: ?>
-            <!-- ETAPA 1: BUSCAR POR CPF -->
+            <!-- ETAPA 1: BUSCAR POR E-MAIL -->
             <div class="card card-cert p-4">
-                <h5 class="fw-bold mb-1"><i class="bi bi-search me-2"></i>Buscar meu certificado por CPF</h5>
+                <h5 class="fw-bold mb-1"><i class="bi bi-search me-2"></i>Buscar meu certificado por e-mail</h5>
                 <p class="text-muted mb-3">
-                    Informe o CPF usado na inscrição<?= $curso_atual ? ' para o evento <strong>' . htmlspecialchars($curso_atual['nome']) . '</strong>' : '' ?>.
+                    Informe o <strong>e-mail usado na inscrição</strong><?= $curso_atual ? ' para o evento <strong>' . htmlspecialchars($curso_atual['nome']) . '</strong>' : '' ?>.
                 </p>
                 <form method="POST" action="certificado.php">
                     <?php if ($id_curso > 0): ?>
@@ -275,13 +278,14 @@ $data_evento_fmt = $inscricao ? $certificado->formatarDataEvento($inscricao) : '
                         </div>
                     <?php endif; ?>
                     <div class="mb-3">
-                        <label for="cpf" class="form-label fw-semibold">CPF *</label>
-                        <input type="text" name="cpf" id="cpf" class="form-control form-control-lg"
-                               value="<?= htmlspecialchars($cpf_query) ?>" placeholder="000.000.000-00"
-                               maxlength="14" required inputmode="numeric">
+                        <label for="email" class="form-label fw-semibold">E-mail da inscrição *</label>
+                        <input type="email" name="email" id="email" class="form-control form-control-lg"
+                               value="<?= htmlspecialchars($email_query) ?>" placeholder="voce@exemplo.com"
+                               required autocomplete="email">
+                        <small class="text-muted mt-1 d-block">Use exatamente o e-mail que você cadastrou ao se inscrever no evento.</small>
                     </div>
-                    <button type="submit" name="buscar_cpf" value="1" class="btn btn-humaniza w-100 py-2 btn-lg">
-                        <i class="bi bi-fingerprint me-2"></i>Consultar meu CPF
+                    <button type="submit" name="buscar_email" value="1" class="btn btn-humaniza w-100 py-2 btn-lg">
+                        <i class="bi bi-envelope-search me-2"></i>Buscar meu certificado
                     </button>
                 </form>
             </div>
@@ -295,15 +299,5 @@ $data_evento_fmt = $inscricao ? $certificado->formatarDataEvento($inscricao) : '
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Máscara de CPF
-        document.getElementById('cpf')?.addEventListener('input', function(e) {
-            let v = e.target.value.replace(/\D/g, '').slice(0, 11);
-            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-            e.target.value = v;
-        });
-    </script>
 </body>
 </html>

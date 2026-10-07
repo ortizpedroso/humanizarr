@@ -238,7 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                     <small class="text-muted d-block">
                                         Quando habilitado, os inscritos poderão emitir o certificado na página pública
-                                        (buscar por CPF → confirmar e-mail → gerar PDF), após o término do evento.
+                                        (buscar por e-mail da inscrição → confirmar → gerar PDF), após o término do evento.
                                         A arte do certificado pode ser enviada em <a href="editar_curso.php?id=0" onclick="return confirm('Cadastre a arte pelo painel do curso após criá-lo (Editar &gt; Arte do Certificado).');return false;">Editar Curso</a>.
                                     </small>
                                 </div>

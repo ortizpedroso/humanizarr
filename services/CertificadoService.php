@@ -144,6 +144,21 @@ class CertificadoService
     }
 
     /**
+     * Mascara um e-mail para exibição segura (ex.: jo***@dominio.com).
+     */
+    public static function mascararEmail($email)
+    {
+        $email = trim((string)$email);
+        if (strpos($email, '@') === false) {
+            return $email;
+        }
+        list($local, $dominio) = explode('@', $email, 2);
+        $len = strlen($local);
+        $visivel = substr($local, 0, min(2, $len));
+        return $visivel . str_repeat('*', max(3, $len - 2)) . '@' . $dominio;
+    }
+
+    /**
      * Valida um código público de certificado.
      * @return array|false ['id_inscricao' => int, 'email' => string] ou false
      */

@@ -134,8 +134,9 @@ $mail->Password   = 'senha_do_email';              // Senha do e-mail
       (elegibilidade, PDF via FPDF, código de validação SHA-256, envio por e-mail via PHPMailer)
 - [x] `config/ConfiguracaoEmail.php` — classe de configuração SMTP centralizada
 - [x] `public/cursos.php` — vitrine pública de eventos em cards (controller fino)
-- [x] `public/certificado.php` — página pública: CPF -> confirmação de e-mail -> nova aba com PDF
-- [x] `models/Inscricao.php::buscarInscricaoParaCertificado()` — busca por ID, CPF ou curso+e-mail
+- [x] `public/certificado.php` — página pública: busca por E-MAIL -> confirmação -> nova aba com PDF
+      (este projeto não coleta CPF; a pesquisa oficial do certificado é o e-mail da inscrição)
+- [x] `models/Inscricao.php::buscarInscricaoParaCertificado()` — busca por ID ou e-mail (curso opcional); CPF mantido apenas como compatibilidade
 - [x] Painel: período de inscrições (início/fim), data fim do evento, vagas e switch
       "Habilitar emissão de certificados" em criar/editar curso
 - [x] Upload validado da arte do certificado no painel (tamanho <= 5MB + MIME real)
@@ -148,9 +149,9 @@ $mail->Password   = 'senha_do_email';              // Senha do e-mail
    data do evento (início/fim), e marca **"Habilitar geração de certificado"** (+ opcionalmente a arte).
 2. O participante acessa a página pública **`public/cursos.php`** (Cursos/Eventos), vê os cards
    e clica no card do evento em que se inscreveu.
-3. Após o término do evento, ele digita o **CPF** em `certificado.php`. O sistema confirma a
+3. Após o término do evento, ele digita o **E-MAIL usado na inscrição** em `certificado.php`. O sistema confirma a
    inscrição (Confirmada + emissão habilitada + evento encerrado) via `CertificadoService`.
-4. Confirmado o CPF, o usuário **confirma o e-mail** cadastrado na inscrição.
+4. Localizada a inscrição, o usuário **reconfirma o e-mail** para liberar a geração.
 5. Ao clicar em **"Gerar Certificado"**, abre-se uma **nova aba com o PDF** pronto para imprimir
    ou salvar; simultaneamente o certificado é **enviado por e-mail** ao participante
    (mensagem de agradecimento + PDF em anexo + link de validação).

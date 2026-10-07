@@ -121,7 +121,7 @@ $cursos = $certificado->listarCursosParaVitrine();
 
         <div class="text-center mt-5">
             <a href="certificado.php" class="btn btn-outline-danger">
-                <i class="bi bi-search me-2"></i>Já participou? Buscar meu certificado por CPF
+                <i class="bi bi-search me-2"></i>Já participou? Buscar meu certificado por e-mail
             </a>
         </div>
 

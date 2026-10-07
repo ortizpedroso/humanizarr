@@ -137,10 +137,14 @@ class Inscricao {
     }
 
     /**
-     * Busca a inscrição de um participante (por ID da inscrição, CPF + curso,
-     * CPF apenas, ou e-mail + curso). Usado pela página pública de certificado.
+     * Busca a inscrição de um participante (por ID da inscrição, E-MAIL,
+     * e-mail + curso, ou CPF + curso — CPF mantido apenas como compatibilidade).
+     * Usado pela página pública de certificado.
      *
-     * @param array $filtros ['id_inscricao' => int] | ['cpf' => string] |
+     * OBS: este projeto NÃO coleta CPF nas inscrições; a forma oficial de
+     * pesquisa do certificado é o E-MAIL cadastrado na inscrição.
+     *
+     * @param array $filtros ['id_inscricao' => int] | ['email' => string] |
      *                       ['id_curso' => int, 'email' => string] |
      *                       ['id_curso' => int, 'cpf' => string]
      * @return array|false Dados da inscrição (curso + inscrito) ou false se não encontrada
@@ -163,11 +167,12 @@ class Inscricao {
             $query .= " AND c.id = :id_curso";
         }
         if (!empty($filtros['email'])) {
-            $query .= " AND i.email = :email";
+            // Pesquisa oficial por e-mail (este projeto não usa CPF)
+            $query .= " AND LOWER(TRIM(i.email)) = :email";
         }
         if (!empty($filtros['cpf'])) {
-            // Compara apenas os dígitos (tolerante a máscara)
-            $query .= " AND REPLACE(REPLACE(i.cpf, '.', ''), '-', '') = :cpf";
+            // Compatibilidade: compara apenas os dígitos (tolerante a máscara)
+            $query .= " AND REPLACE(REPLACE(COALESCE(i.cpf, ''), '.', ''), '-', '') = :cpf";
         }
         // Certificado só é liberado após o término do evento
         // (usa data_fim_evento quando existir; senão, data_evento)

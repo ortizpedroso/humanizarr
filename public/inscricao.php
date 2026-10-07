@@ -205,14 +205,7 @@ $evento_encerrado = $curso_item && strtotime($curso_item['data_fim_evento'] ?: $
 
                         <form action="processar_inscricao.php?id_curso=<?= $id_curso ?>" method="POST" id="form-inscricao">
                             <div class="row">
-                                <!-- Campo CPF - Primeiro campo -->
-                                <div class="col-md-6 mb-3">
-                                    <label for="cpf" class="form-label">CPF *</label>
-                                    <input type="text" class="form-control form-control-lg" id="cpf" name="cpf" 
-                                           placeholder="000.000.000-00" required maxlength="14">
-                                    <small class="text-muted">Digite seu CPF para buscar seus dados cadastrais</small>
-                                </div>
-
+                                <!-- Campo Nome - Primeiro campo (este projeto não coleta CPF) -->
                                 <div class="col-md-6 mb-3">
                                     <label for="nome" class="form-label">Nome Completo *</label>
                                     <input type="text" class="form-control form-control-lg" id="nome" name="nome" required>
@@ -221,6 +214,7 @@ $evento_encerrado = $curso_item && strtotime($curso_item['data_fim_evento'] ?: $
                                 <div class="col-md-6 mb-3">
                                     <label for="email" class="form-label">E-mail *</label>
                                     <input type="email" class="form-control form-control-lg" id="email" name="email" required>
+                                    <small class="text-muted">Guarde este e-mail: após o evento, ele é a forma de buscar e receber o seu certificado.</small>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -280,54 +274,8 @@ $evento_encerrado = $curso_item && strtotime($curso_item['data_fim_evento'] ?: $
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Máscara de Telefone, CPF e Script de Toggle -->
+    <!-- Máscara de Telefone e Script de Toggle -->
     <script>
-        // Máscara de CPF
-        document.getElementById('cpf').addEventListener('input', function(e) {
-            let valor = e.target.value.replace(/\D/g, '');
-            
-            if (valor.length > 11) valor = valor.substring(0, 11);
-            
-            if (valor.length >= 9) {
-                valor = valor.replace(/(\d{3})(\d{3})(\d{3})(\d{2}).*/, '$1.$2.$3-$4');
-            } else if (valor.length >= 6) {
-                valor = valor.replace(/(\d{3})(\d{3})(\d{3}).*/, '$1.$2.$3');
-            } else if (valor.length >= 3) {
-                valor = valor.replace(/(\d{3})(\d{3}).*/, '$1.$2');
-            }
-            
-            e.target.value = valor;
-            
-            // Busca automática quando CPF estiver completo
-            if (valor.length === 14) {
-                buscarPorCpf(valor);
-            }
-        });
-
-        // Função para buscar dados por CPF via AJAX
-        function buscarPorCpf(cpf) {
-            fetch('buscar_cpf.php?cpf=' + encodeURIComponent(cpf))
-                .then(response => response.json())
-                .then(data => {
-                    if (data.encontrado) {
-                        // Preenche os campos automaticamente
-                        document.getElementById('nome').value = data.nome || '';
-                        document.getElementById('email').value = data.email || '';
-                        document.getElementById('telefone').value = data.telefone || '';
-                        document.getElementById('tipo').value = data.tipo || '';
-                        document.getElementById('instituicao').value = data.instituicao || '';
-                        document.getElementById('semestre_atuacao').value = data.semestre_atuacao || '';
-                        
-                        // Atualiza os labels conforme o tipo
-                        toggleCampoExtra();
-                        
-                        // Mostra mensagem de sucesso
-                        alert('Dados encontrados! Verifique as informações e faça alterações se necessário.');
-                    }
-                })
-                .catch(err => console.error('Erro ao buscar CPF:', err));
-        }
-
         // Máscara de telefone
         document.getElementById('telefone').addEventListener('input', function(e) {
             let valor = e.target.value.replace(/\D/g, '');
@@ -343,33 +291,12 @@ $evento_encerrado = $curso_item && strtotime($curso_item['data_fim_evento'] ?: $
             e.target.value = valor;
         });
 
-        // Validação de CPF
-        function validarCPF(cpf) {
-            cpf = cpf.replace(/\D/g, '');
-            if (cpf.length !== 11) return false;
-            if (/^(\d)\1+$/.test(cpf)) return false;
-            
-            let soma = 0, resto;
-            for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
-            resto = (soma * 10) % 11;
-            if (resto === 10 || resto === 11) resto = 0;
-            if (resto !== parseInt(cpf.substring(9, 10))) return false;
-            
-            soma = 0;
-            for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
-            resto = (soma * 10) % 11;
-            if (resto === 10 || resto === 11) resto = 0;
-            if (resto !== parseInt(cpf.substring(10, 11))) return false;
-            
-            return true;
-        }
-
         // Validação do formulário
         document.getElementById('form-inscricao').addEventListener('submit', function(e) {
-            const cpf = document.getElementById('cpf').value;
-            if (!validarCPF(cpf)) {
+            const email = document.getElementById('email').value.trim();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 e.preventDefault();
-                alert('CPF inválido! Por favor, verifique e tente novamente.');
+                alert('E-mail inválido! Por favor, verifique e tente novamente.');
                 return false;
             }
         });
