@@ -25,6 +25,25 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $id_curso = $_GET['id'];
 
+// Garante que as colunas novas existam no banco (auto-migração, evita HTTP 500)
+try {
+    foreach ([
+        'data_fim_evento'   => "ADD COLUMN data_fim_evento DATETIME NULL",
+        'inscricao_inicio'  => "ADD COLUMN inscricao_inicio DATETIME NULL",
+        'inscricao_fim'     => "ADD COLUMN inscricao_fim DATETIME NULL",
+        'vagas_limite'      => "ADD COLUMN vagas_limite INT NOT NULL DEFAULT 0",
+        'emitir_certificado'=> "ADD COLUMN emitir_certificado TINYINT(1) NOT NULL DEFAULT 0",
+        'certificado_arquivo'=> "ADD COLUMN certificado_arquivo VARCHAR(255) NULL",
+    ] as $coluna => $ddl) {
+        $chk = $db->query("SHOW COLUMNS FROM cursos LIKE " . $db->quote($coluna));
+        if ($chk && $chk->rowCount() == 0) {
+            $db->exec("ALTER TABLE cursos $ddl");
+        }
+    }
+} catch (Exception $e) {
+    // Em caso de falha na migração, segue com as colunas existentes
+}
+
 // Busca dados do curso
 $curso_item = $curso->lerPorId($id_curso);
 
@@ -195,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-md-6 mb-3">
                                 <label for="data_evento" class="form-label">Início do Evento *</label>
                                 <input type="datetime-local" class="form-control" id="data_evento" name="data_evento" 
-                                       value="<?= date('Y-m-d\TH:i', strtotime($curso_item['data_evento'])) ?>" required>
+                                       value="<?= $curso_item['data_evento'] ? date('Y-m-d\TH:i', strtotime($curso_item['data_evento'])) : '' ?>" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="data_fim_evento" class="form-label">Término do Evento</label>
