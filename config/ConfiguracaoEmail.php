@@ -24,11 +24,17 @@ class ConfiguracaoEmail
      * função mail() do servidor (sendmail da Hostinger) com remetente
      * automatico abaixo.
      */
-    const SMTP_HOST   = '_CHANGE_ME_'; // ex.: 'smtp.' . SITE_DOMAIN
-    const SMTP_USER   = '_CHANGE_ME_'; // ex.: 'eventos@humanizamais.org.br'
+    /*
+     * Hostinger: smtp.hostinger.com funciona nas duas portas abaixo.
+     * Para ativar o envio por SMTP autenticado, basta preencher
+     * SMTP_USER e SMTP_PASS com a conta criada no cPanel
+     * (Emails -> Contas de Email). O HOST já está correto.
+     */
+    const SMTP_HOST   = 'smtp.hostinger.com';
+    const SMTP_USER   = '_CHANGE_ME_'; // ex.: 'no-reply@humanizamais.org.br'
     const SMTP_PASS   = '_CHANGE_ME_'; // senha da conta criada no cPanel
-    const SMTP_PORT   = 465;           // 465 (SSL) ou 587 (TLS)
-    const SMTP_SECURE = 'ssl';         // 'ssl' p/ 465, 'tls' p/ 587
+    const SMTP_PORT   = 465;           // 465 (SSL/TLS) ou 587 (STARTTLS/TLS)
+    const SMTP_SECURE = 'ssl';         // 'ssl' p/ porta 465, 'tls' p/ porta 587
 
     /** Remetente padrão (fallback quando SMTP não está configurado). */
     const FROM_EMAIL = 'no-reply@humanizamais.org.br';
@@ -40,6 +46,13 @@ class ConfiguracaoEmail
         return strpos(self::SMTP_HOST, '_CHANGE_ME_') === false
             && strpos(self::SMTP_USER, '_CHANGE_ME_') === false
             && self::SMTP_PASS !== '_CHANGE_ME_';
+    }
+
+    /** Porta/segurança alternativos para STARTTLS (caso precise trocar). */
+    public static function usarStartTls()
+    {
+        // Helper opcional: retorna ['port' => 587, 'secure' => 'tls'].
+        return ['port' => 587, 'secure' => 'tls'];
     }
 
     /**
