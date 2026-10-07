@@ -18,14 +18,20 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $id_curso = (int)$_GET['id'];
 $curso_item = $curso->lerPorId($id_curso);
 
-// Verifica se curso existe e está com status Aberto
+// Verifica se curso existe, está com status Aberto e dentro do período de inscrições
 if (!$curso_item || $curso_item['status'] != 'Aberto') {
     $titulo_pagina = "Inscrições Encerradas";
+    $curso_indisponivel = true;
+} elseif (!Curso::inscricoesAbertasPorData($curso_item)) {
+    $titulo_pagina = "Inscrições Fora do Período";
     $curso_indisponivel = true;
 } else {
     $titulo_pagina = htmlspecialchars($curso_item['nome']);
     $curso_indisponivel = false;
 }
+
+// Se o evento já ocorreu/encerrou, direciona para a página de certificado
+$evento_encerrado = $curso_item && strtotime($curso_item['data_fim_evento'] ?: $curso_item['data_evento']) < time();
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -176,7 +182,13 @@ if (!$curso_item || $curso_item['status'] != 'Aberto') {
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
                                 <i class="bi bi-check-circle me-2"></i>
                                 <strong>Inscrição realizada com sucesso!</strong><br>
-                                Enviamos um e-mail de confirmação para o endereço informado.
+                                Enviamos um e-mail de confirmação para o endereço informado.<br>
+                                <?php if (!empty($curso_item['emitir_certificado'])): ?>
+                                    <i class="bi bi-patch-check me-1"></i>O certificado digital estará disponível
+                                    após a realização do evento em
+                                    <a href="certificado.php?id=<?= $id_curso ?>" class="fw-bold">nossa página de certificados</a>.
+                                <?php endif; ?>
+                                <?php unset($_SESSION['link_certificado']); ?>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                             <?php unset($_SESSION['sucesso_inscricao']); ?>

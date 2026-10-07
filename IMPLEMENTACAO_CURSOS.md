@@ -129,6 +129,72 @@ $mail->Password   = 'senha_do_email';              // Senha do e-mail
 - [x] PHPMailer configurado (comentar/descomentar)
 - [x] Tratamento de erros
 
+### Emissão de Certificados (arquitetura orientada a objetos)
+- [x] `services/CertificadoService.php` — classe central de regras de negócio do certificado
+      (elegibilidade, PDF via FPDF, código de validação SHA-256, envio por e-mail via PHPMailer)
+- [x] `config/ConfiguracaoEmail.php` — classe de configuração SMTP centralizada
+- [x] `public/cursos.php` — vitrine pública de eventos em cards (controller fino)
+- [x] `public/certificado.php` — página pública: CPF -> confirmação de e-mail -> nova aba com PDF
+- [x] `models/Inscricao.php::buscarInscricaoParaCertificado()` — busca por ID, CPF ou curso+e-mail
+- [x] Painel: período de inscrições (início/fim), data fim do evento, vagas e switch
+      "Habilitar emissão de certificados" em criar/editar curso
+- [x] Upload validado da arte do certificado no painel (tamanho <= 5MB + MIME real)
+
+---
+
+## COMO FUNCIONA A GERAÇÃO DO CERTIFICADO (fluxo oficial)
+
+1. No painel, o administrador cadastra o evento com **data de início e fim das inscrições**,
+   data do evento (início/fim), e marca **"Habilitar geração de certificado"** (+ opcionalmente a arte).
+2. O participante acessa a página pública **`public/cursos.php`** (Cursos/Eventos), vê os cards
+   e clica no card do evento em que se inscreveu.
+3. Após o término do evento, ele digita o **CPF** em `certificado.php`. O sistema confirma a
+   inscrição (Confirmada + emissão habilitada + evento encerrado) via `CertificadoService`.
+4. Confirmado o CPF, o usuário **confirma o e-mail** cadastrado na inscrição.
+5. Ao clicar em **"Gerar Certificado"**, abre-se uma **nova aba com o PDF** pronto para imprimir
+   ou salvar; simultaneamente o certificado é **enviado por e-mail** ao participante
+   (mensagem de agradecimento + PDF em anexo + link de validação).
+6. Cada certificado carrega um **código de validação público** (`certificado.php?validar=CÓDIGO`).
+
+Camadas (OO): `config/` (conexão/config) -> `models/` (dados) -> `services/` (regras de negócio)
+-> `public/` (controllers finos apenas com HTML + orquestração).
+
+### Dependências instaladas no projeto
+- **FPDF**: `lib/fpdf/fpdf.php` (sem Composer) — geração do PDF.
+- **PHPMailer**: pasta `PHPMailer/src/` — envio do e-mail com anexo.
+
+### Ativação do envio de e-mail
+Preencha `config/ConfiguracaoEmail.php` com os dados SMTP do cPanel (Hostinger).
+Enquanto as constantes tiverem `_CHANGE_ME_`, o envio fica desativado automaticamente
+(o certificado continua disponível para impressão/download na página pública).
+
+## 📜 COMO FUNCIONA A GERAÇÃO DO CERTIFICADO
+
+1. O administrador cadastra a **arte** (JPG/PNG em tamanho A4 paisagem) e marca
+   **"Habilitar emissão de certificados"** em `editar_curso.php`.
+2. O participante acessa `public/certificado.php`, informa o evento + e-mail da inscrição
+   (ou recebe o link direto `certificado.php?inscricao=ID`).
+3. O sistema valida: inscrição existe, está **Confirmada** e a emissão está habilitada.
+4. O PDF é gerado dinamicamente com nome, evento, data, carga horária, local e
+   assinaturas de Presidente/Vice, usando a arte como plano de fundo
+   (ou layout institucional padrão se não houver arte). Inclui código de validação (hash).
+
+### ⚠️ Dependência obrigatória: FPDF
+A geração do PDF usa a biblioteca **FPDF** (leve, sem Composer). Para instalar:
+
+```bash
+# Na raiz do projeto, crie a pasta lib e coloque o FPDF:
+mkdir -p lib/fpdf
+# Baixe de https://github.com/setasign/fpdf (release mais recente)
+# e copie os arquivos para lib/fpdf/ (o caminho final deve ser lib/fpdf/fpdf.php)
+```
+
+Sem essa pasta, a página de consulta funciona normalmente, mas o download exibe um
+aviso orientando a instalação. Alternativa: TCPDF/FPDI via Composer (`composer require setasign/fpdf`).
+
+Se a arte enviada for um **PDF**, ele é armazenado apenas como referência — para
+composição automática sobre PDF use a extensão FPDI do FPDF.
+
 ---
 
 ## 🎨 Identidade Visual

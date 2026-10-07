@@ -213,6 +213,11 @@ unset($_SESSION['msg_curso'], $_SESSION['tipo_msg_curso']);
                                            title="Ver Link de Inscrição" target="_blank">
                                             <i class="bi bi-box-arrow-up-right"></i>
                                         </a>
+                                        <a href="certificado.php?id=<?= $curso_item['id'] ?>"
+                                           class="btn btn-sm btn-outline-<?= !empty($curso_item['emitir_certificado']) ? 'success' : 'secondary' ?> btn-action"
+                                           title="Certificados (página pública de emissão)" target="_blank">
+                                            <i class="bi bi-patch-check"></i>
+                                        </a>
                                         <a href="excluir_curso.php?id=<?= $curso_item['id'] ?>" 
                                            class="btn btn-sm btn-outline-danger btn-action" 
                                            title="Excluir"

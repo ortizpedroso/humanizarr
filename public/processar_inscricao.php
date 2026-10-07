@@ -5,6 +5,10 @@ require_once '../config/Database.php';
 require_once '../models/Curso.php';
 require_once '../models/Inscricao.php';
 
+// Link público para consulta do certificado (usado no e-mail de confirmação)
+$base_url = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+$link_certificado = $base_url . '/certificado.php?id=' . (int)($_GET['id_curso'] ?? 0);
+
 $database = new Database();
 $db = $database->getConnection();
 
@@ -125,6 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             
                             <p>Contamos com sua presença! Chegue com 15 minutos de antecedência.</p>
+
+                            <p>📜 Após o evento, seu <strong>certificado digital</strong> estará disponível em:
+                            <a href="' . $link_certificado . '">' . $link_certificado . '</a></p>
                             
                             <p>Atenciosamente,<br>
                             <strong>Equipe Instituto Humaniza RR</strong></p>
@@ -152,6 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // FIM DA CONFIGURAÇÃO DO PHPMAILER
         // =========================================================================
 
+        // Salva o link do certificado na sessão para exibir na tela de sucesso
+        $_SESSION['link_certificado'] = $link_certificado;
         $_SESSION['sucesso_inscricao'] = true;
         header("Location: inscricao.php?id=" . $id_curso);
         exit;

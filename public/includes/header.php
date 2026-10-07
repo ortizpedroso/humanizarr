@@ -103,6 +103,7 @@ $favicon_url = !empty($conf_site['favicon']) ? $prefixo . $conf_site['favicon'] 
                 <li class="nav-item"><a class="nav-link" href="sobre.php">Sobre</a></li>
                 <li class="nav-item"><a class="nav-link" href="galeria_completa.php">Galeria</a></li>
                 <li class="nav-item"><a class="nav-link" href="projetos.php">Projetos</a></li>
+                <li class="nav-item"><a class="nav-link" href="public/cursos.php">Eventos</a></li>
                 <li class="nav-item"><a class="nav-link" href="noticias.php">Notícias</a></li>
                 <li class="nav-item"><a class="nav-link" href="contato.php">Contato</a></li>
                 <li class="nav-item ms-lg-3">

@@ -33,17 +33,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'presidente' => $_POST['presidente'],
             'vice_presidente' => $_POST['vice_presidente'],
             'data_evento' => $_POST['data_evento'],
-            'status' => $_POST['status']
+            'data_fim_evento' => !empty($_POST['data_fim_evento']) ? $_POST['data_fim_evento'] : null,
+            'inscricao_inicio' => !empty($_POST['inscricao_inicio']) ? $_POST['inscricao_inicio'] : null,
+            'inscricao_fim' => !empty($_POST['inscricao_fim']) ? $_POST['inscricao_fim'] : null,
+            'vagas_limite' => intval($_POST['vagas_limite'] ?? 0),
+            'status' => $_POST['status'],
+            'emitir_certificado' => isset($_POST['emitir_certificado']) ? 1 : 0
         ];
 
-        // Tenta criar o curso
-        if ($curso->criar($dados)) {
-            $_SESSION['msg_curso'] = "Curso/Palestra criado com sucesso!";
-            $_SESSION['tipo_msg_curso'] = 'sucesso';
-            header("Location: lista_cursos.php");
-            exit;
-        } else {
-            $erro = "Erro ao criar curso. Tente novamente.";
+        // Validação: período de inscrições
+        if ($dados['inscricao_inicio'] && $dados['inscricao_fim']
+            && strtotime($dados['inscricao_fim']) < strtotime($dados['inscricao_inicio'])) {
+            $erro = "A data de fim das inscrições não pode ser anterior ao início.";
+            $dados = null;
+        }
+
+        // Validação: evento (início -> fim)
+        if (!empty($dados['data_fim_evento']) && strtotime($dados['data_fim_evento']) < strtotime($dados['data_evento'])) {
+            $erro = "A data de fim do evento não pode ser anterior ao início.";
+            $dados = null;
+        }
+
+        if ($dados !== null) {
+            // Tenta criar o curso
+            if ($curso->criar($dados)) {
+                $_SESSION['msg_curso'] = "Curso/Palestra criado com sucesso!";
+                $_SESSION['tipo_msg_curso'] = 'sucesso';
+                header("Location: lista_cursos.php");
+                exit;
+            } else {
+                $erro = $erro ?: "Erro ao criar curso. Tente novamente.";
+            }
         }
     }
 }
@@ -145,8 +165,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                        placeholder="Ex: 4 horas" required>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label for="data_evento" class="form-label">Data e Horário *</label>
-                                <input type="datetime-local" class="form-control" id="data_evento" name="data_evento" required>
+                                <label for="vagas_limite" class="form-label">Limite de Vagas (0 = ilimitado)</label>
+                                <input type="number" class="form-control" id="vagas_limite" name="vagas_limite" 
+                                       value="0" min="0">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="status" class="form-label">Status Inicial *</label>
@@ -154,6 +175,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <option value="Rascunho">Rascunho (Não visível)</option>
                                     <option value="Aberto">Aberto (Inscrições liberadas)</option>
                                 </select>
+                            </div>
+
+                            <!-- Período de Inscrições -->
+                            <div class="col-12 mb-2">
+                                <h6 class="fw-bold text-danger mb-0"><i class="bi bi-calendar-check me-2"></i>Período de Inscrições</h6>
+                                <small class="text-muted">Intervalo em que o formulário de inscrição ficará disponível. Deixe em branco para inscrições sempre abertas enquanto o status for "Aberto".</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="inscricao_inicio" class="form-label">Início das Inscrições</label>
+                                <input type="datetime-local" class="form-control" id="inscricao_inicio" name="inscricao_inicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="inscricao_fim" class="form-label">Fim das Inscrições</label>
+                                <input type="datetime-local" class="form-control" id="inscricao_fim" name="inscricao_fim">
+                            </div>
+
+                            <!-- Datas do Evento -->
+                            <div class="col-md-6 mb-3">
+                                <label for="data_evento" class="form-label">Data e Horário do Evento *</label>
+                                <input type="datetime-local" class="form-control" id="data_evento" name="data_evento" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="data_fim_evento" class="form-label">Data e Horário de Término do Evento</label>
+                                <input type="datetime-local" class="form-control" id="data_fim_evento" name="data_fim_evento">
+                                <small class="text-muted">Para eventos de múltiplos dias. O certificado é liberado após este horário.</small>
                             </div>
 
                             <!-- Local -->
@@ -178,6 +224,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label for="vice_presidente" class="form-label">Vice-Presidente *</label>
                                 <input type="text" class="form-control" id="vice_presidente" name="vice_presidente" 
                                        placeholder="Nome do vice-presidente" required>
+                            </div>
+
+                            <!-- Certificado -->
+                            <div class="col-12 mb-3">
+                                <div class="border rounded p-3" style="background:#fff8f8;">
+                                    <div class="form-check form-switch mb-1">
+                                        <input class="form-check-input" type="checkbox" role="switch" 
+                                               id="emitir_certificado" name="emitir_certificado" value="1">
+                                        <label class="form-check-label fw-bold" for="emitir_certificado">
+                                            <i class="bi bi-patch-check me-1 text-danger"></i>Habilitar geração de certificado para este evento
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block">
+                                        Quando habilitado, os inscritos poderão emitir o certificado na página pública
+                                        (buscar por CPF → confirmar e-mail → gerar PDF), após o término do evento.
+                                        A arte do certificado pode ser enviada em <a href="editar_curso.php?id=0" onclick="return confirm('Cadastre a arte pelo painel do curso após criá-lo (Editar &gt; Arte do Certificado).');return false;">Editar Curso</a>.
+                                    </small>
+                                </div>
                             </div>
                         </div>
 

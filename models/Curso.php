@@ -10,8 +10,8 @@ class Curso {
     // Criar novo curso
     public function criar($dados) {
         $query = "INSERT INTO " . $this->tabela . " 
-                  (nome, descricao, duracao, local, palestrante, presidente, vice_presidente, data_evento, horario_inicio, vagas_limite, status, banner_imagem, certificado_arquivo, emitir_certificado) 
-                  VALUES (:nome, :descricao, :duracao, :local, :palestrante, :presidente, :vice_presidente, :data_evento, :horario_inicio, :vagas_limite, :status, :banner_imagem, :certificado_arquivo, :emitir_certificado)";
+                  (nome, descricao, duracao, local, palestrante, presidente, vice_presidente, data_evento, data_fim_evento, horario_inicio, inscricao_inicio, inscricao_fim, vagas_limite, status, banner_imagem, certificado_arquivo, emitir_certificado) 
+                  VALUES (:nome, :descricao, :duracao, :local, :palestrante, :presidente, :vice_presidente, :data_evento, :data_fim_evento, :horario_inicio, :inscricao_inicio, :inscricao_fim, :vagas_limite, :status, :banner_imagem, :certificado_arquivo, :emitir_certificado)";
         
         $stmt = $this->conn->prepare($query);
         
@@ -31,8 +31,16 @@ class Curso {
         $stmt->bindParam(":presidente", $dados['presidente']);
         $stmt->bindParam(":vice_presidente", $dados['vice_presidente']);
         $stmt->bindParam(":data_evento", $dados['data_evento']);
-        $stmt->bindParam(":horario_inicio", $dados['horario_inicio']);
-        $stmt->bindParam(":vagas_limite", $dados['vagas_limite']);
+        $data_fim = $dados['data_fim_evento'] ?? null;
+        $stmt->bindParam(":data_fim_evento", $data_fim);
+        $horario = $dados['horario_inicio'] ?? null;
+        $stmt->bindParam(":horario_inicio", $horario);
+        $ini_insc = !empty($dados['inscricao_inicio']) ? $dados['inscricao_inicio'] : null;
+        $fim_insc = !empty($dados['inscricao_fim']) ? $dados['inscricao_fim'] : null;
+        $stmt->bindParam(":inscricao_inicio", $ini_insc);
+        $stmt->bindParam(":inscricao_fim", $fim_insc);
+        $vagas = $dados['vagas_limite'] ?? 0;
+        $stmt->bindParam(":vagas_limite", $vagas);
         $stmt->bindParam(":status", $dados['status']);
         
         $banner = $dados['banner_imagem'] ?? null;
@@ -57,7 +65,10 @@ class Curso {
                       presidente = :presidente, 
                       vice_presidente = :vice_presidente, 
                       data_evento = :data_evento, 
+                      data_fim_evento = :data_fim_evento, 
                       horario_inicio = :horario_inicio, 
+                      inscricao_inicio = :inscricao_inicio, 
+                      inscricao_fim = :inscricao_fim, 
                       vagas_limite = :vagas_limite, 
                       status = :status,
                       emitir_certificado = :emitir_certificado";
@@ -90,7 +101,14 @@ class Curso {
         $stmt->bindParam(":presidente", $dados['presidente']);
         $stmt->bindParam(":vice_presidente", $dados['vice_presidente']);
         $stmt->bindParam(":data_evento", $dados['data_evento']);
-        $stmt->bindParam(":horario_inicio", $dados['horario_inicio']);
+        $data_fim = !empty($dados['data_fim_evento']) ? $dados['data_fim_evento'] : null;
+        $stmt->bindParam(":data_fim_evento", $data_fim);
+        $horario = $dados['horario_inicio'] ?? null;
+        $stmt->bindParam(":horario_inicio", $horario);
+        $ini_insc = !empty($dados['inscricao_inicio']) ? $dados['inscricao_inicio'] : null;
+        $fim_insc = !empty($dados['inscricao_fim']) ? $dados['inscricao_fim'] : null;
+        $stmt->bindParam(":inscricao_inicio", $ini_insc);
+        $stmt->bindParam(":inscricao_fim", $fim_insc);
         $stmt->bindParam(":vagas_limite", $dados['vagas_limite']);
         $stmt->bindParam(":status", $dados['status']);
         
@@ -161,6 +179,36 @@ class Curso {
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
+    }
+
+    /**
+     * Lista de cursos para a vitrine pública (cursos/eventos).
+     * Inclui Abertos e Encerrados (histórico com certificado),
+     * ordena pelos futuros primeiro.
+     */
+    public function lerParaVitrine() {
+        $query = "SELECT * FROM " . $this->tabela . "
+                  WHERE status IN ('Aberto', 'Encerrado')
+                  ORDER BY (data_evento >= NOW()) DESC, data_evento DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Verifica se as inscrições do curso estão abertas neste momento,
+     * respeitando o período configurado (inscricao_inicio / inscricao_fim).
+     * Se não houver período configurado, considera sempre aberto.
+     */
+    public static function inscricoesAbertasPorData($curso) {
+        $agora = time();
+        if (!empty($curso['inscricao_inicio']) && strtotime($curso['inscricao_inicio']) > $agora) {
+            return false;
+        }
+        if (!empty($curso['inscricao_fim']) && strtotime($curso['inscricao_fim']) < $agora) {
+            return false;
+        }
+        return true;
     }
 }
 ?>

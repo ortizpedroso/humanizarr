@@ -47,10 +47,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'presidente' => htmlspecialchars($_POST['presidente']),
         'vice_presidente' => htmlspecialchars($_POST['vice_presidente']),
         'data_evento' => $_POST['data_evento'],
+        'data_fim_evento' => !empty($_POST['data_fim_evento']) ? $_POST['data_fim_evento'] : null,
         'horario_inicio' => $_POST['horario_inicio'] ?? null,
+        'inscricao_inicio' => !empty($_POST['inscricao_inicio']) ? $_POST['inscricao_inicio'] : null,
+        'inscricao_fim' => !empty($_POST['inscricao_fim']) ? $_POST['inscricao_fim'] : null,
         'vagas_limite' => intval($_POST['vagas_limite']),
         'status' => $_POST['status']
     ];
+
+    // Validações de coerência de datas
+    if ($dados['inscricao_inicio'] && $dados['inscricao_fim'] && strtotime($dados['inscricao_fim']) < strtotime($dados['inscricao_inicio'])) {
+        $mensagem = 'O fim das inscrições não pode ser anterior ao início.';
+        $tipo_mensagem = 'erro';
+        $dados = null;
+    }
+    if ($dados && !empty($dados['data_fim_evento']) && strtotime($dados['data_fim_evento']) < strtotime($dados['data_evento'])) {
+        $mensagem = 'O término do evento não pode ser anterior à data de início.';
+        $tipo_mensagem = 'erro';
+        $dados = null;
+    }
+
+    if ($dados !== null) {
 
     // Upload de Banner (opcional)
     if (isset($_FILES['banner_imagem']) && $_FILES['banner_imagem']['error'] === UPLOAD_ERR_OK) {
@@ -69,16 +86,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Upload de Arte do Certificado (opcional)
     if (isset($_FILES['certificado_arquivo']) && $_FILES['certificado_arquivo']['error'] === UPLOAD_ERR_OK) {
-        $extensao = pathinfo($_FILES['certificado_arquivo']['name'], PATHINFO_EXTENSION);
+        $extensao = strtolower(pathinfo($_FILES['certificado_arquivo']['name'], PATHINFO_EXTENSION));
         $extensoes_permitidas = ['pdf', 'jpg', 'jpeg', 'png'];
-        
-        if (in_array(strtolower($extensao), $extensoes_permitidas)) {
+
+        // Segurança: tamanho máximo 5MB e validação do MIME type real da imagem
+        $eh_imagem = in_array($extensao, ['jpg', 'jpeg', 'png']);
+        $tamanho_ok = $_FILES['certificado_arquivo']['size'] <= 5 * 1024 * 1024;
+        $mime_ok = true;
+        if ($eh_imagem && function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $_FILES['certificado_arquivo']['tmp_name']);
+            finfo_close($finfo);
+            $mime_ok = in_array($mime, ['image/jpeg', 'image/png']);
+        }
+
+        if (in_array($extensao, $extensoes_permitidas) && $tamanho_ok && $mime_ok) {
             $novo_nome = 'cert_' . time() . '.' . $extensao;
             $caminho_upload = __DIR__ . '/uploads/' . $novo_nome;
-            
+
             if (move_uploaded_file($_FILES['certificado_arquivo']['tmp_name'], $caminho_upload)) {
                 $dados['certificado_arquivo'] = $novo_nome;
             }
+        } else {
+            $mensagem = 'Arte inválida: envie JPG/PNG (recomendado para geração automática do PDF) ou PDF, até 5MB.';
+            $tipo_mensagem = 'erro';
         }
     }
 
@@ -94,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mensagem = "Erro ao atualizar curso.";
         $tipo_mensagem = 'erro';
     }
+    } // fim do bloco de validação ($dados !== null)
 }
 ?>
 <!DOCTYPE html>
@@ -161,14 +193,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="data_evento" class="form-label">Data do Evento *</label>
+                                <label for="data_evento" class="form-label">Início do Evento *</label>
                                 <input type="datetime-local" class="form-control" id="data_evento" name="data_evento" 
                                        value="<?= date('Y-m-d\TH:i', strtotime($curso_item['data_evento'])) ?>" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="horario_inicio" class="form-label">Horário de Início</label>
-                                <input type="time" class="form-control" id="horario_inicio" name="horario_inicio" 
-                                       value="<?= htmlspecialchars($curso_item['horario_inicio'] ?? '') ?>">
+                                <label for="data_fim_evento" class="form-label">Término do Evento</label>
+                                <input type="datetime-local" class="form-control" id="data_fim_evento" name="data_fim_evento" 
+                                       value="<?= !empty($curso_item['data_fim_evento']) ? date('Y-m-d\TH:i', strtotime($curso_item['data_fim_evento'])) : '' ?>">
+                                <small class="text-muted">O certificado é liberado após este horário.</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="inscricao_inicio" class="form-label">Início das Inscrições</label>
+                                <input type="datetime-local" class="form-control" id="inscricao_inicio" name="inscricao_inicio" 
+                                       value="<?= !empty($curso_item['inscricao_inicio']) ? date('Y-m-d\TH:i', strtotime($curso_item['inscricao_inicio'])) : '' ?>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="inscricao_fim" class="form-label">Fim das Inscrições</label>
+                                <input type="datetime-local" class="form-control" id="inscricao_fim" name="inscricao_fim" 
+                                       value="<?= !empty($curso_item['inscricao_fim']) ? date('Y-m-d\TH:i', strtotime($curso_item['inscricao_fim'])) : '' ?>">
+                                <small class="text-muted">Deixe em branco para inscrições sempre abertas (enquanto status = Aberto).</small>
                             </div>
                         </div>
 
@@ -218,12 +265,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="certificado_arquivo" class="form-label">Arte do Certificado</label>
-                                <input type="file" class="form-control" id="certificado_arquivo" name="certificado_arquivo" accept=".pdf,image/*">
+                                <input type="file" class="form-control" id="certificado_arquivo" name="certificado_arquivo" accept=".pdf,image/jpeg,image/png">
                                 <?php if (!empty($curso_item['certificado_arquivo'])): ?>
+                                    <?php $arte_ext = strtolower(pathinfo($curso_item['certificado_arquivo'], PATHINFO_EXTENSION)); ?>
+                                    <?php if (in_array($arte_ext, ['jpg', 'jpeg', 'png'])): ?>
+                                        <img src="uploads/<?= htmlspecialchars($curso_item['certificado_arquivo']) ?>"
+                                             alt="Arte do Certificado" class="preview-imagem img-thumbnail">
+                                    <?php endif; ?>
                                     <small class="text-success d-block mt-1">
-                                        <i class="bi bi-check-circle"></i> Certificado já cadastrado
+                                        <i class="bi bi-check-circle"></i> Arte cadastrada:
+                                        <?= htmlspecialchars($curso_item['certificado_arquivo']) ?>
+                                        <?php if ($arte_ext === 'pdf'): ?>
+                                            <br><i class="bi bi-exclamation-triangle text-warning"></i>
+                                            Para emissão automática do PDF, envie a arte em JPG ou PNG.
+                                        <?php endif; ?>
                                     </small>
                                 <?php endif; ?>
+                                <small class="text-muted d-block mt-1">
+                                    Arte de fundo usada na geração automática dos certificados
+                                    (<a href="certificado.php?id=<?= $id_curso ?>" target="_blank" class="text-decoration-none">ver página de emissão</a>).
+                                </small>
                             </div>
                         </div>
 

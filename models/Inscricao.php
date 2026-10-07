@@ -135,5 +135,72 @@ class Inscricao {
         $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
         return $resultado['total'];
     }
+
+    /**
+     * Busca a inscrição de um participante (por ID da inscrição, CPF + curso,
+     * CPF apenas, ou e-mail + curso). Usado pela página pública de certificado.
+     *
+     * @param array $filtros ['id_inscricao' => int] | ['cpf' => string] |
+     *                       ['id_curso' => int, 'email' => string] |
+     *                       ['id_curso' => int, 'cpf' => string]
+     * @return array|false Dados da inscrição (curso + inscrito) ou false se não encontrada
+     */
+    public function buscarInscricaoParaCertificado($filtros) {
+        $query = "SELECT insc.id AS id_inscricao, insc.id_curso, insc.status AS status_inscricao,
+                         i.nome, i.email, i.cpf, i.tipo, i.instituicao,
+                         c.nome AS curso_nome, c.duracao, c.local, c.palestrante,
+                         c.presidente, c.vice_presidente, c.data_evento, c.certificado_arquivo,
+                         c.emitir_certificado, c.status AS curso_status
+                  FROM inscricoes insc
+                  INNER JOIN inscritos i ON insc.id_inscrito = i.id
+                  INNER JOIN cursos c ON insc.id_curso = c.id
+                  WHERE 1";
+
+        if (!empty($filtros['id_inscricao'])) {
+            $query .= " AND insc.id = :id_inscricao";
+        }
+        if (!empty($filtros['id_curso'])) {
+            $query .= " AND c.id = :id_curso";
+        }
+        if (!empty($filtros['email'])) {
+            $query .= " AND i.email = :email";
+        }
+        if (!empty($filtros['cpf'])) {
+            // Compara apenas os dígitos (tolerante a máscara)
+            $query .= " AND REPLACE(REPLACE(i.cpf, '.', ''), '-', '') = :cpf";
+        }
+        // Certificado só é liberado após o término do evento
+        // (usa data_fim_evento quando existir; senão, data_evento)
+        if (!empty($filtros['somente_evento_encerrado'])) {
+            $query .= " AND COALESCE(c.data_fim_evento, c.data_evento) <= NOW()";
+        }
+
+        try {
+            $stmt = $this->conn->prepare($query);
+
+            if (!empty($filtros['id_inscricao'])) {
+                $stmt->bindValue(":id_inscricao", (int)$filtros['id_inscricao'], PDO::PARAM_INT);
+            }
+            if (!empty($filtros['id_curso'])) {
+                $stmt->bindValue(":id_curso", (int)$filtros['id_curso'], PDO::PARAM_INT);
+            }
+            if (!empty($filtros['email'])) {
+                $stmt->bindValue(":email", trim(strtolower($filtros['email'])));
+            }
+            if (!empty($filtros['cpf'])) {
+                $stmt->bindValue(":cpf", preg_replace('/\D/', '', $filtros['cpf']));
+            }
+
+            $stmt->execute();
+
+            if (!empty($filtros['todas'])) {
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Erro ao buscar inscrição para certificado: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>
