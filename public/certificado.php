@@ -133,9 +133,12 @@ if ($inscricao && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['confir
             $aviso = 'Certificado gerado com sucesso! Ele também foi enviado em anexo para <strong>'
                    . htmlspecialchars($inscricao['email'], ENT_QUOTES, 'UTF-8')
                    . '</strong> (confira também a caixa de spam).';
+        } elseif ($envio_ok === false) {
+            $aviso = 'Certificado gerado com sucesso! Porém, o envio automático por e-mail falhou no servidor. '
+                   . 'Você pode imprimir ou baixar o PDF abaixo (e, se preferir, solicite o reenvio à organização).';
         } else {
-            $aviso = 'Certificado gerado com sucesso! O envio automático por e-mail não foi possível '
-                   . 'no momento, mas você pode imprimir ou baixar o PDF abaixo.';
+            $aviso = 'Certificado gerado com sucesso! O envio por e-mail está desativado no momento, '
+                   . 'mas você pode imprimir ou baixar o PDF abaixo.';
         }
     }
 }
@@ -151,25 +154,18 @@ $codigo_validacao = $inscricao
     ? \CertificadoService::gerarCodigoValidacao($inscricao['id_inscricao'], $inscricao['email'])
     : '';
 $data_evento_fmt = $inscricao ? $certificado->formatarDataEvento($inscricao) : '';
+// Cabeçalho padrão do site (menu, logo, tipografia Montserrat)
+include __DIR__ . '/includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certificados - Humaniza RR</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); min-height: 100vh; }
-        .hero-section { background: linear-gradient(135deg, #E30613 0%, #c41c26 100%); color: white; padding: 50px 0; margin-bottom: 40px; }
+<style>
+    body { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); min-height: 100vh; }
+    main { display: block; }
+    .hero-section { background: linear-gradient(135deg, #E30613 0%, #c41c26 100%); color: white; padding: 50px 0; margin-bottom: 40px; }
         .card-cert { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         .btn-humaniza { background-color: #E30613; color: white; font-weight: 600; }
-        .btn-humaniza:hover { background-color: #c41c26; color: white; }
-    </style>
-</head>
-<body>
+    .btn-humaniza:hover { background-color: #c41c26; color: white; }
+</style>
+<main>
     <div class="hero-section text-center">
         <div class="container">
             <h1 class="fw-bold"><i class="bi bi-patch-check me-2"></i>Certificados Digitais</h1>
@@ -291,13 +287,7 @@ $data_evento_fmt = $inscricao ? $certificado->formatarDataEvento($inscricao) : '
             </div>
         <?php endif; ?>
 
-        <p class="text-center text-muted mt-4 mb-0" style="font-size: 0.8rem;">
-            &copy; <?= date('Y') ?> Instituto Humaniza RR ·
-            <a href="../politica-privacidade.php" class="text-decoration-none">Política de Privacidade</a> ·
-            <a href="cursos.php" class="text-decoration-none">Cursos e Eventos</a>
-        </p>
     </div>
+</main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include __DIR__ . '/includes/footer.php'; ?>

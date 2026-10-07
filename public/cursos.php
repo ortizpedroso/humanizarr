@@ -22,29 +22,22 @@ if (!$db) {
 
 $certificado = new CertificadoService($db);
 $cursos = $certificado->listarCursosParaVitrine();
+// Cabeçalho padrão do site (menu, logo, tipografia Montserrat)
+include __DIR__ . '/includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cursos e Eventos - Humaniza RR</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); min-height: 100vh; }
-        .hero-section { background: linear-gradient(135deg, #E30613 0%, #c41c26 100%); color: white; padding: 50px 0; margin-bottom: 40px; }
+<style>
+    body { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); min-height: 100vh; }
+    main { display: block; }
+    .hero-section { background: linear-gradient(135deg, #E30613 0%, #c41c26 100%); color: white; padding: 50px 0; margin-bottom: 40px; }
         .card-evento { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; transition: transform .2s, box-shadow .2s; height: 100%; }
         .card-evento:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
         .card-evento .banner { height: 170px; background: linear-gradient(135deg,#E30613,#7a0a10); background-size: cover; background-position: center; position: relative; }
         .badge-status { position: absolute; top: 12px; right: 12px; }
         .btn-humaniza { background-color: #E30613; color: white; font-weight: 600; }
         .btn-humaniza:hover { background-color: #c41c26; color: white; }
-        .text-humaniza { color: #E30613; }
-    </style>
-</head>
-<body>
+    .text-humaniza { color: #E30613; }
+</style>
+<main>
     <div class="hero-section text-center">
         <div class="container">
             <h1 class="fw-bold"><i class="bi bi-calendar-event me-2"></i>Cursos e Eventos</h1>
@@ -125,12 +118,7 @@ $cursos = $certificado->listarCursosParaVitrine();
             </a>
         </div>
 
-        <p class="text-center text-muted mt-4 mb-0" style="font-size: 0.8rem;">
-            &copy; <?= date('Y') ?> Instituto Humaniza RR ·
-            <a href="../index.php" class="text-decoration-none">Voltar ao site</a>
-        </p>
     </div>
+</main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include __DIR__ . '/includes/footer.php'; ?>

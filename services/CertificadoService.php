@@ -354,11 +354,49 @@ class CertificadoService
     {
         require_once __DIR__ . '/../config/ConfiguracaoEmail.php';
 
-        if (!ConfiguracaoEmail::smtpConfigurado()) {
-            error_log('CertificadoService: SMTP não configurado (config/ConfiguracaoEmail.php).');
-            return null;
+        // 1) SMTP autenticado configurado -> PHPMailer
+        if (ConfiguracaoEmail::smtpConfigurado()) {
+            return $this->enviarEmailSmtp($inscricao);
         }
 
+        // 2) Fallback: mail() do servidor (sendmail da Hostinger),
+        //    com PDF em anexo via MIME multipart montado por ConfiguracaoEmail.
+        if (function_exists('mail')) {
+            try {
+                $pdf      = $this->gerarPdfString($inscricao);
+                $arquivo  = self::nomeArquivo($inscricao['nome']);
+                $assunto  = 'Seu certificado - '
+                          . html_entity_decode($inscricao['curso_nome'], ENT_QUOTES, 'UTF-8');
+                $mime     = ConfiguracaoEmail::headersMail(
+                    $this->corpoEmail($inscricao), $pdf, $arquivo
+                );
+                // encodeURI do assunto para acentos corretos
+                $assuntoEnc = '=?UTF-8?B?' . base64_encode($assunto) . '?=';
+                $ok = @mail(
+                    $inscricao['email'],
+                    $assuntoEnc,
+                    $mime['body'],
+                    $mime['headers'],
+                    '-f' . ConfiguracaoEmail::FROM_EMAIL
+                );
+                if ($ok) {
+                    return true;
+                }
+                error_log('CertificadoService: mail() retornou false (verifique SPF/PTR do domínio).');
+                return false;
+            } catch (\Throwable $e) {
+                error_log('Erro ao enviar certificado via mail(): ' . $e->getMessage());
+                return false;
+            }
+        }
+
+        error_log('CertificadoService: nenhum método de envio disponível (SMTP e mail() ausentes).');
+        return null;
+    }
+
+    /** Envio via SMTP autenticado (PHPMailer). */
+    private function enviarEmailSmtp(array $inscricao)
+    {
         try {
             require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
             require_once __DIR__ . '/../PHPMailer/src/SMTP.php';

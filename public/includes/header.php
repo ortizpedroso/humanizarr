@@ -17,6 +17,10 @@ try {
 $prefixo = (strpos($_SERVER['PHP_SELF'], 'public/') !== false) ? 'uploads/' : 'public/uploads/';
 $logo_url = !empty($conf_site['logo']) ? $prefixo . $conf_site['logo'] : "";
 $favicon_url = !empty($conf_site['favicon']) ? $prefixo . $conf_site['favicon'] : "";
+
+// Prefixo dos links do menu: páginas dentro de /public precisam de "../"
+// para voltar à raiz do site (home, sobre, galeria etc.).
+$raiz = (strpos($_SERVER['PHP_SELF'], 'public/') !== false) ? '../' : '';
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -89,7 +93,7 @@ $favicon_url = !empty($conf_site['favicon']) ? $prefixo . $conf_site['favicon'] 
 
 <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
     <div class="container">
-        <a class="navbar-brand text-white fw-bold fs-3" href="index.php">
+        <a class="navbar-brand text-white fw-bold fs-3" href="<?= $raiz ?>index.php">
             <?php if($logo_url): ?><img src="<?= $logo_url ?>" style="max-height: 55px;"><?php else: ?>Humaniza <span style="font-weight: 300;">RR</span><?php endif; ?>
         </a>
         
@@ -99,15 +103,15 @@ $favicon_url = !empty($conf_site['favicon']) ? $prefixo . $conf_site['favicon'] 
         
         <div class="collapse navbar-collapse" id="navMain">
             <ul class="navbar-nav ms-auto align-items-center">
-                <li class="nav-item"><a class="nav-link" href="index.php">Início</a></li>
-                <li class="nav-item"><a class="nav-link" href="sobre.php">Sobre</a></li>
-                <li class="nav-item"><a class="nav-link" href="galeria_completa.php">Galeria</a></li>
-                <li class="nav-item"><a class="nav-link" href="projetos.php">Projetos</a></li>
-                <li class="nav-item"><a class="nav-link" href="public/cursos.php">Eventos</a></li>
-                <li class="nav-item"><a class="nav-link" href="noticias.php">Notícias</a></li>
-                <li class="nav-item"><a class="nav-link" href="contato.php">Contato</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $raiz ?>index.php">Início</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $raiz ?>sobre.php">Sobre</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $raiz ?>galeria_completa.php">Galeria</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $raiz ?>projetos.php">Projetos</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $raiz ?>cursos.php">Eventos</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $raiz ?>noticias.php">Notícias</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $raiz ?>contato.php">Contato</a></li>
                 <li class="nav-item ms-lg-3">
-                    <a class="nav-link btn-admin-nav" href="public/login.php">Admin</a>
+                    <a class="nav-link btn-admin-nav" href="<?= $raiz ?>public/login.php">Admin</a>
                 </li>
             </ul>
         </div>

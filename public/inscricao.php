@@ -106,6 +106,11 @@ $evento_encerrado = $curso_item && strtotime($curso_item['data_fim_evento'] ?: $
     </section>
 
     <div class="container mb-5">
+        <div class="mb-4">
+            <a href="cursos.php" class="text-decoration-none fw-semibold" style="color:#E30613;">
+                <i class="bi bi-arrow-left me-1"></i> Voltar para Cursos e Eventos
+            </a>
+        </div>
         <?php if ($curso_indisponivel): ?>
             <!-- Curso indisponível -->
             <div class="row justify-content-center">
